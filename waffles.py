@@ -140,10 +140,102 @@ def get_exam_datetime(username):
 	conn.close()
 	return row[0] if row else None
 
+DEF_SUBJECTS = ["Physics", "Chemistry", "Math"]
+CHAPTER_COUNT = 20
+TASK_COLUMNS = ["theory", "notes", "questions", "board_pyqs", "jee_main_pyqs"]
+
+def init_chapter_progress():
+	conn = get_conn()
+	cur = conn.cursor()
+	cur.execute(
+		"""
+		CREATE TABLE IF NOT EXISTS chapter_progress(
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			username TEXT,
+			subject TEXT,
+			chapter INTEGER,
+			theory INTEGER,
+			notes INTEGER,
+			questions INTEGER,
+			board_pyqs INTEGER,
+			jee_main_pyqs INTEGER,
+			last_updated TEXT,
+			UNIQUE(username, subject, chapter)
+		)
+		"""
+	)
+	conn.commit()
+	conn.close()
+
+
+def load_chapter_progress(username, subject):
+	conn = get_conn()
+	query = "SELECT chapter, theory, notes, questions, board_pyqs, jee_main_pyqs FROM chapter_progress WHERE username=? AND subject=? ORDER BY chapter"
+	df = pd.read_sql_query(query, conn, params=(username, subject))
+	conn.close()
+	progress = {row["chapter"]: {
+		"theory": bool(row["theory"]),
+		"notes": bool(row["notes"]),
+		"questions": bool(row["questions"]),
+		"board_pyqs": bool(row["board_pyqs"]),
+		"jee_main_pyqs": bool(row["jee_main_pyqs"]),
+	} for row in df.to_dict(orient="records")}
+	return progress
+
+
+def save_chapter_progress(username, subject, progress):
+	conn = get_conn()
+	cur = conn.cursor()
+	for chapter, tasks in progress.items():
+		cur.execute(
+			"INSERT INTO chapter_progress(username,subject,chapter,theory,notes,questions,board_pyqs,jee_main_pyqs,last_updated) VALUES (?,?,?,?,?,?,?,?,?) "
+			"ON CONFLICT(username,subject,chapter) DO UPDATE SET theory=excluded.theory, notes=excluded.notes, questions=excluded.questions, board_pyqs=excluded.board_pyqs, jee_main_pyqs=excluded.jee_main_pyqs, last_updated=excluded.last_updated",
+			(
+				username,
+				subject,
+				chapter,
+				int(tasks["theory"]),
+				int(tasks["notes"]),
+				int(tasks["questions"]),
+				int(tasks["board_pyqs"]),
+				int(tasks["jee_main_pyqs"]),
+				datetime.now().isoformat(),
+			)
+		)
+	conn.commit()
+	conn.close()
+
 
 init_db()
+init_chapter_progress()
 
-st.set_page_config(page_title="WafflesD$D", page_icon=":guardsman:", layout="centered")
+st.set_page_config(page_title="D and D's Daily Tracker", page_icon=":guardsman:", layout="centered")
+st.markdown(
+	"""
+	<style>
+		body, .main, .stApp {
+			background-color: #0b111c;
+			color: #c9d1d9;
+		}
+		.stButton button {
+			background-color: #161b2b;
+			color: #f5f7ff;
+		}
+		.stTextInput>div>div>input, .stNumberInput>div>div>input, .stDateInput>div>div>input {
+			background-color: #09101f;
+			color: #f5f7ff;
+		}
+		.stCheckbox>div {
+			color: #c9d1d9;
+		}
+		.stExpanderHeader {
+			background-color: #12182b;
+			color: #c9d1d9;
+		}
+	</style>
+	""",
+	unsafe_allow_html=True,
+)
 st.title("Daily Tracker")
 
 if "user" not in st.session_state:
