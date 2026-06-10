@@ -143,8 +143,8 @@ def get_exam_datetime(username):
 
 init_db()
 
-st.set_page_config(page_title="D and D's Daily Tracker", page_icon=":guardsman:", layout="centered")
-st.title("D and D's Daily Tracker")
+st.set_page_config(page_title="WafflesD$D", page_icon=":guardsman:", layout="centered")
+st.title("Daily Tracker")
 
 if "user" not in st.session_state:
 	st.session_state.user = None
