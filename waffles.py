@@ -236,7 +236,7 @@ st.markdown(
 	""",
 	unsafe_allow_html=True,
 )
-st.title("Daily Tracker")
+
 
 if "user" not in st.session_state:
 	st.session_state.user = None
@@ -248,7 +248,11 @@ def logout():
 	st.session_state.page = "home"
 
 if st.session_state.user is None:
-	st.header("Login")
+	if st.session_state.page != "home":
+		st.session_state.page = "home"
+	st.header("Waffles D$D")
+	st.subheader("(secure) daily tracking for you and me <3")
+	st.write("Use your login below to access the preparation tracker, exam countdown, and screen time logger.")
 	with st.form("login_form"):
 		username = st.text_input("Username")
 		password = st.text_input("Password", type="password")
@@ -259,7 +263,7 @@ if st.session_state.user is None:
 			st.success("Logged in as %s" % username)
 		else:
 			st.error("Invalid credentials")
-	st.write("Only two users are allowed. If you need another account, create one below (allowed only while two users are not yet registered).")
+	st.write("Only two users are allowed (u & me gurll)")
 	if user_count() < 2:
 		with st.form("create_form"):
 			new_user = st.text_input("New username")
@@ -289,39 +293,36 @@ if st.sidebar.button("Screen Time Tracker"):
 	st.session_state.page = "screen"
 
 if st.session_state.page == "home":
-	st.header("Home")
-	st.write("Quick links")
-	col1, col2 = st.columns(2)
-	if col1.button("Go to Preparation Tracker"):
-		st.session_state.page = "prep"
-		st.experimental_rerun()
-	if col2.button("Go to Time Left"):
-		st.session_state.page = "time"
-		st.experimental_rerun()
-	if col1.button("Go to Screen Time Tracker"):
-		st.session_state.page = "screen"
-		st.experimental_rerun()
-
-	st.subheader("Waffle-style summary (simple)")
-	st.write("This workspace keeps daily logs for screen time and preparation items. Use the pages to add and view data.")
-
+	st.markdown("## Welcome back")
+	
 elif st.session_state.page == "prep":
 	st.header("Preparation Tracker")
-	st.subheader("Add a preparation item")
-	with st.form("add_prep"):
-		itype = st.selectbox("Type", ["chapter", "subject", "pyq", "main", "other"])
-		title = st.text_input("Title")
-		status = st.selectbox("Status", ["todo", "in-progress", "done"])
-		notes = st.text_area("Notes")
-		add = st.form_submit_button("Add")
-	if add and title:
-		add_prep_item(st.session_state.user, itype, title, status, notes)
-		st.success("Added")
-	df = get_prep_items(st.session_state.user)
-	if df.empty:
-		st.info("No preparation items yet.")
-	else:
-		st.dataframe(df)
+	st.write("Track progress for Physics, Chemistry, and Math chapters. Check the tasks you have completed, then save progress for the selected subject.")
+	selected_subject = st.selectbox("Choose subject", DEF_SUBJECTS)
+	current_progress = load_chapter_progress(st.session_state.user, selected_subject)
+	with st.form("chapter_progress"):
+		save_progress = st.form_submit_button("Save progress")
+		for chapter in range(1, CHAPTER_COUNT + 1):
+			chapter_data = current_progress.get(chapter, {task: False for task in TASK_COLUMNS})
+			with st.expander(f"Chapter {chapter}"):
+				col1, col2, col3 = st.columns([1, 1, 1])
+				col1.checkbox("Theory", value=chapter_data["theory"], key=f"{selected_subject}_{chapter}_theory")
+				col1.checkbox("Notes", value=chapter_data["notes"], key=f"{selected_subject}_{chapter}_notes")
+				col2.checkbox("Questions", value=chapter_data["questions"], key=f"{selected_subject}_{chapter}_questions")
+				col2.checkbox("Board PYQs", value=chapter_data["board_pyqs"], key=f"{selected_subject}_{chapter}_board_pyqs")
+				col3.checkbox("JEE Main PYQs", value=chapter_data["jee_main_pyqs"], key=f"{selected_subject}_{chapter}_jee_main_pyqs")
+	if save_progress:
+		progress_updates = {}
+		for chapter in range(1, CHAPTER_COUNT + 1):
+			progress_updates[chapter] = {
+				"theory": st.session_state[f"{selected_subject}_{chapter}_theory"],
+				"notes": st.session_state[f"{selected_subject}_{chapter}_notes"],
+				"questions": st.session_state[f"{selected_subject}_{chapter}_questions"],
+				"board_pyqs": st.session_state[f"{selected_subject}_{chapter}_board_pyqs"],
+				"jee_main_pyqs": st.session_state[f"{selected_subject}_{chapter}_jee_main_pyqs"],
+			}
+		save_chapter_progress(st.session_state.user, selected_subject, progress_updates)
+		st.success(f"Saved {selected_subject} chapter progress.")
 
 elif st.session_state.page == "time":
 	st.header("Time Left to Exam")
@@ -346,8 +347,6 @@ elif st.session_state.page == "time":
 			hours = diff.seconds // 3600
 			mins = (diff.seconds % 3600) // 60
 			st.metric("Time left", f"{days}d {hours}h {mins}m")
-			if st.button("Refresh countdown"):
-				st.experimental_rerun()
 
 elif st.session_state.page == "screen":
 	st.header("Screen Time Tracker")
