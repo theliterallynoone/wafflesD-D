@@ -295,6 +295,16 @@ init_chapter_progress()
 
 # Theme definitions
 THEMES = {
+	"Beige": {
+		"bg_color": "#F5F1E8",
+		"text_color": "#3E3730",
+		"button_bg": "#D4C9B9",
+		"button_text": "#2A2420",
+		"input_bg": "#F0EBE3",
+		"input_text": "#3E3730",
+		"expander_bg": "#E8DDD0",
+		"expander_text": "#3E3730",
+	},
 	"Dark Mode": {
 		"bg_color": "#0b111c",
 		"text_color": "#c9d1d9",
@@ -394,7 +404,7 @@ if "user" not in st.session_state:
 if "page" not in st.session_state:
 	st.session_state.page = "home"
 if "theme" not in st.session_state:
-	st.session_state.theme = "Dark Mode"
+	st.session_state.theme = "Beige"
 
 # Apply the current theme
 apply_theme(st.session_state.theme)
