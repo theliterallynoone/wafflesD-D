@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 from pathlib import Path
 import pandas as pd
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 import hashlib
 
 DB_PATH = Path(__file__).parent / "waffles.db"
@@ -45,7 +45,8 @@ def init_db():
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			username TEXT,
 			entry_date TEXT,
-			minutes INTEGER
+			minutes INTEGER,
+			utility TEXT DEFAULT 'General'
 		)
 		"""
 	)
@@ -59,8 +60,8 @@ def init_db():
 	)
 	# insert two default users if not present (do not overwrite)
 	try:
-		cur.execute("INSERT OR IGNORE INTO users(username, password_hash) VALUES (?,?)", ("me", hash_pw("changeme")))
-		cur.execute("INSERT OR IGNORE INTO users(username, password_hash) VALUES (?,?)", ("partner", hash_pw("changeme")))
+		cur.execute("INSERT OR IGNORE INTO users(username, password_hash) VALUES (?,?)", ("V", hash_pw("weball")))
+		cur.execute("INSERT OR IGNORE INTO users(username, password_hash) VALUES (?,?)", ("beastboy", hash_pw("changeme")))
 	except Exception:
 		pass
 	conn.commit()
@@ -112,10 +113,10 @@ def get_prep_items(username):
 	conn.close()
 	return df
 
-def add_screen_time(username, entry_date, minutes):
+def add_screen_time(username, entry_date, minutes, utility="General"):
 	conn = get_conn()
 	cur = conn.cursor()
-	cur.execute("INSERT INTO screen_time(username,entry_date,minutes) VALUES (?,?,?)", (username, entry_date, minutes))
+	cur.execute("INSERT INTO screen_time(username,entry_date,minutes,utility) VALUES (?,?,?,?)", (username, entry_date, minutes, utility))
 	conn.commit()
 	conn.close()
 
@@ -140,8 +141,91 @@ def get_exam_datetime(username):
 	conn.close()
 	return row[0] if row else None
 
+PHYSICS_CHAPTERS = [
+	"Physics and Measurement",
+	"Kinematics",
+	"Laws of Motion",
+	"Work, Energy, and Power",
+	"System of Particles and Rotational Motion",
+	"Gravitation",
+	"Mechanical Properties of Solids",
+	"Mechanical Properties of Fluids",
+	"Thermal Properties of Matter",
+	"Thermodynamics",
+	"Kinetic Theory of Gases",
+	"Oscillations",
+	"Waves",
+	"Electrostatics",
+	"Current Electricity",
+	"Magnetic Effects of Current and Magnetism",
+	"Electromagnetic Induction and Alternating Currents",
+	"Electromagnetic Waves",
+	"Ray Optics and Optical Instruments",
+	"Wave Optics",
+	"Dual Nature of Matter and Radiation",
+	"Atoms and Nuclei",
+	"Electronic Devices",
+	"Communication Systems",
+]
+
+MATH_CHAPTERS = [
+	"Sets, Relations, and Functions",
+	"Complex Numbers",
+	"Quadratic Equations",
+	"Matrices",
+	"Determinants",
+	"Permutations and Combinations",
+	"Binomial Theorem",
+	"Sequences and Series",
+	"Limits, Continuity, and Differentiability",
+	"Differentiation (Application of Derivatives)",
+	"Indefinite Integration",
+	"Definite Integration (and Area Under Curves)",
+	"Differential Equations",
+	"Straight Lines",
+	"Circles",
+	"Conic Sections (Parabola, Ellipse, and Hyperbola)",
+	"Vector Algebra",
+	"Three-Dimensional Geometry (3D)",
+	"Trigonometric Functions and Identities",
+	"Trigonometric Equations",
+	"Inverse Trigonometric Functions",
+	"Statistics",
+	"Probability",
+	"Linear Programming",
+]
+
+CHEMISTRY_CHAPTERS = [
+	"Some Basic Concepts in Chemistry",
+	"Atomic Structure",
+	"Chemical Bonding and Molecular Structure",
+	"Chemical Thermodynamics",
+	"Solutions",
+	"Equilibrium",
+	"Redox Reactions and Electrochemistry",
+	"Chemical Kinetics",
+	"Classification of Elements and Periodicity in Properties",
+	"p-Block Elements",
+	"d- and f-Block Elements",
+	"Coordination Compounds",
+	"Purification and Characterisation of Organic Compounds",
+	"Some Basic Principles of Organic Chemistry",
+	"Hydrocarbons",
+	"Organic Compounds Containing Halogens",
+	"Organic Compounds Containing Oxygen",
+	"Organic Compounds Containing Nitrogen",
+	"Biomolecules",
+	"Principles Related to Practical Chemistry",
+]
+
+CHAPTER_MAPPING = {
+	"Physics": PHYSICS_CHAPTERS,
+	"Chemistry": CHEMISTRY_CHAPTERS,
+	"Math": MATH_CHAPTERS,
+}
+
 DEF_SUBJECTS = ["Physics", "Chemistry", "Math"]
-CHAPTER_COUNT = 20
+CHAPTER_COUNT = 24  # Max chapters across all subjects
 TASK_COLUMNS = ["theory", "notes", "questions", "board_pyqs", "jee_main_pyqs"]
 
 def init_chapter_progress():
@@ -209,39 +293,111 @@ def save_chapter_progress(username, subject, progress):
 init_db()
 init_chapter_progress()
 
+# Theme definitions
+THEMES = {
+	"Dark Mode": {
+		"bg_color": "#0b111c",
+		"text_color": "#c9d1d9",
+		"button_bg": "#161b2b",
+		"button_text": "#f5f7ff",
+		"input_bg": "#09101f",
+		"input_text": "#f5f7ff",
+		"expander_bg": "#12182b",
+		"expander_text": "#c9d1d9",
+	},
+	"Light Mode": {
+		"bg_color": "#ffffff",
+		"text_color": "#000000",
+		"button_bg": "#e0e0e0",
+		"button_text": "#000000",
+		"input_bg": "#f5f5f5",
+		"input_text": "#000000",
+		"expander_bg": "#f0f0f0",
+		"expander_text": "#000000",
+	},
+	"Pastel Pink": {
+		"bg_color": "#fff5f7",
+		"text_color": "#d946a6",
+		"button_bg": "#FFD1DC",
+		"button_text": "#9d4569",
+		"input_bg": "#ffe6f0",
+		"input_text": "#d946a6",
+		"expander_bg": "#ffc9dd",
+		"expander_text": "#d946a6",
+	},
+	"Teal": {
+		"bg_color": "#f0f8f7",
+		"text_color": "#2d5450",
+		"button_bg": "#8fb6ab",
+		"button_text": "#ffffff",
+		"input_bg": "#d8e8e5",
+		"input_text": "#2d5450",
+		"expander_bg": "#a8c5bf",
+		"expander_text": "#1a3a36",
+	},
+	"Green": {
+		"bg_color": "#f5faf3",
+		"text_color": "#3d5a2c",
+		"button_bg": "#afd69b",
+		"button_text": "#2d3f1f",
+		"input_bg": "#d9e8ce",
+		"input_text": "#3d5a2c",
+		"expander_bg": "#c2ddb5",
+		"expander_text": "#2d3f1f",
+	},
+	"Sage": {
+		"bg_color": "#f5f7f6",
+		"text_color": "#4a5c59",
+		"button_bg": "#8ca19e",
+		"button_text": "#ffffff",
+		"input_bg": "#d3dbd9",
+		"input_text": "#4a5c59",
+		"expander_bg": "#a8b8b4",
+		"expander_text": "#3d4e4a",
+	},
+}
+
+def apply_theme(theme_name):
+	theme = THEMES.get(theme_name, THEMES["Dark Mode"])
+	st.markdown(
+		f"""
+		<style>
+			body, .main, .stApp {{
+				background-color: {theme['bg_color']};
+				color: {theme['text_color']};
+			}}
+			.stButton button {{
+				background-color: {theme['button_bg']};
+				color: {theme['button_text']};
+			}}
+			.stTextInput>div>div>input, .stNumberInput>div>div>input, .stDateInput>div>div>input, .stSelectbox>div>div>select {{
+				background-color: {theme['input_bg']};
+				color: {theme['input_text']};
+			}}
+			.stCheckbox>div {{
+				color: {theme['text_color']};
+			}}
+			.stExpanderHeader {{
+				background-color: {theme['expander_bg']};
+				color: {theme['expander_text']};
+			}}
+		</style>
+		""",
+		unsafe_allow_html=True,
+	)
+
 st.set_page_config(page_title="D and D's Daily Tracker", page_icon=":guardsman:", layout="centered")
-st.markdown(
-	"""
-	<style>
-		body, .main, .stApp {
-			background-color: #0b111c;
-			color: #c9d1d9;
-		}
-		.stButton button {
-			background-color: #161b2b;
-			color: #f5f7ff;
-		}
-		.stTextInput>div>div>input, .stNumberInput>div>div>input, .stDateInput>div>div>input {
-			background-color: #09101f;
-			color: #f5f7ff;
-		}
-		.stCheckbox>div {
-			color: #c9d1d9;
-		}
-		.stExpanderHeader {
-			background-color: #12182b;
-			color: #c9d1d9;
-		}
-	</style>
-	""",
-	unsafe_allow_html=True,
-)
 
 
 if "user" not in st.session_state:
 	st.session_state.user = None
 if "page" not in st.session_state:
 	st.session_state.page = "home"
+if "theme" not in st.session_state:
+	st.session_state.theme = "Dark Mode"
+
+# Apply the current theme
+apply_theme(st.session_state.theme)
 
 def logout():
 	st.session_state.user = None
@@ -279,6 +435,14 @@ if st.session_state.user is None:
 
 # Logged in UI
 st.sidebar.write(f"Logged in as: {st.session_state.user}")
+
+# Theme selector in sidebar
+st.sidebar.header("Settings")
+new_theme = st.sidebar.selectbox("Choose Theme", list(THEMES.keys()), index=list(THEMES.keys()).index(st.session_state.theme))
+if new_theme != st.session_state.theme:
+	st.session_state.theme = new_theme
+	st.rerun()
+
 if st.sidebar.button("Log out"):
 	logout()
 
@@ -287,8 +451,6 @@ if st.sidebar.button("Home"):
 	st.session_state.page = "home"
 if st.sidebar.button("Preparation Tracker"):
 	st.session_state.page = "prep"
-if st.sidebar.button("Time Left"):
-	st.session_state.page = "time"
 if st.sidebar.button("Screen Time Tracker"):
 	st.session_state.page = "screen"
 
@@ -300,72 +462,84 @@ elif st.session_state.page == "prep":
 	st.write("Track progress for Physics, Chemistry, and Math chapters. Check the tasks you have completed, then save progress for the selected subject.")
 	selected_subject = st.selectbox("Choose subject", DEF_SUBJECTS)
 	current_progress = load_chapter_progress(st.session_state.user, selected_subject)
+	chapters = CHAPTER_MAPPING.get(selected_subject, [])
+	
 	with st.form("chapter_progress"):
 		save_progress = st.form_submit_button("Save progress")
-		for chapter in range(1, CHAPTER_COUNT + 1):
-			chapter_data = current_progress.get(chapter, {task: False for task in TASK_COLUMNS})
-			with st.expander(f"Chapter {chapter}"):
+		for chapter_num, chapter_name in enumerate(chapters, 1):
+			chapter_data = current_progress.get(chapter_num, {task: False for task in TASK_COLUMNS})
+			with st.expander(f"{chapter_num}. {chapter_name}"):
 				col1, col2, col3 = st.columns([1, 1, 1])
-				col1.checkbox("Theory", value=chapter_data["theory"], key=f"{selected_subject}_{chapter}_theory")
-				col1.checkbox("Notes", value=chapter_data["notes"], key=f"{selected_subject}_{chapter}_notes")
-				col2.checkbox("Questions", value=chapter_data["questions"], key=f"{selected_subject}_{chapter}_questions")
-				col2.checkbox("Board PYQs", value=chapter_data["board_pyqs"], key=f"{selected_subject}_{chapter}_board_pyqs")
-				col3.checkbox("JEE Main PYQs", value=chapter_data["jee_main_pyqs"], key=f"{selected_subject}_{chapter}_jee_main_pyqs")
+				col1.checkbox("Theory", value=chapter_data["theory"], key=f"{selected_subject}_{chapter_num}_theory")
+				col1.checkbox("Notes", value=chapter_data["notes"], key=f"{selected_subject}_{chapter_num}_notes")
+				col2.checkbox("Questions", value=chapter_data["questions"], key=f"{selected_subject}_{chapter_num}_questions")
+				col2.checkbox("Board PYQs", value=chapter_data["board_pyqs"], key=f"{selected_subject}_{chapter_num}_board_pyqs")
+				col3.checkbox("JEE Main PYQs", value=chapter_data["jee_main_pyqs"], key=f"{selected_subject}_{chapter_num}_jee_main_pyqs")
 	if save_progress:
 		progress_updates = {}
-		for chapter in range(1, CHAPTER_COUNT + 1):
-			progress_updates[chapter] = {
-				"theory": st.session_state[f"{selected_subject}_{chapter}_theory"],
-				"notes": st.session_state[f"{selected_subject}_{chapter}_notes"],
-				"questions": st.session_state[f"{selected_subject}_{chapter}_questions"],
-				"board_pyqs": st.session_state[f"{selected_subject}_{chapter}_board_pyqs"],
-				"jee_main_pyqs": st.session_state[f"{selected_subject}_{chapter}_jee_main_pyqs"],
+		for chapter_num in range(1, len(chapters) + 1):
+			progress_updates[chapter_num] = {
+				"theory": st.session_state[f"{selected_subject}_{chapter_num}_theory"],
+				"notes": st.session_state[f"{selected_subject}_{chapter_num}_notes"],
+				"questions": st.session_state[f"{selected_subject}_{chapter_num}_questions"],
+				"board_pyqs": st.session_state[f"{selected_subject}_{chapter_num}_board_pyqs"],
+				"jee_main_pyqs": st.session_state[f"{selected_subject}_{chapter_num}_jee_main_pyqs"],
 			}
 		save_chapter_progress(st.session_state.user, selected_subject, progress_updates)
 		st.success(f"Saved {selected_subject} chapter progress.")
 
-elif st.session_state.page == "time":
-	st.header("Time Left to Exam")
-	existing = get_exam_datetime(st.session_state.user)
-	if existing:
-		st.write("Saved exam:", existing)
-	d = st.date_input("Exam date", value=date.today())
-	t = st.time_input("Exam time", value=time(9,0))
-	if st.button("Save exam datetime"):
-		dt = datetime.combine(d, t)
-		set_exam_datetime(st.session_state.user, dt.isoformat())
-		st.success("Saved exam datetime")
-	saved = get_exam_datetime(st.session_state.user)
-	if saved:
-		then = datetime.fromisoformat(saved)
-		now = datetime.now()
-		diff = then - now
-		if diff.total_seconds() <= 0:
-			st.warning("Exam time is in the past")
-		else:
-			days = diff.days
-			hours = diff.seconds // 3600
-			mins = (diff.seconds % 3600) // 60
-			st.metric("Time left", f"{days}d {hours}h {mins}m")
-
 elif st.session_state.page == "screen":
 	st.header("Screen Time Tracker")
+	
+	# Common utilities
+	utilities = ["General", "Social Media", "Gaming", "Study", "Entertainment", "Work", "Other"]
+	
 	with st.form("screen_form"):
 		ed = st.date_input("Date", value=date.today())
-		minutes = st.number_input("Minutes spent on screen", min_value=0, step=5)
+		utility = st.selectbox("Utility/App Category", utilities)
+		hours = st.number_input("Hours", min_value=0, max_value=24, step=1)
+		minutes = st.number_input("Additional Minutes", min_value=0, max_value=59, step=5)
 		submit = st.form_submit_button("Log")
 	if submit:
-		add_screen_time(st.session_state.user, ed.isoformat(), int(minutes))
-		st.success("Logged %s minutes for %s" % (minutes, ed.isoformat()))
+		total_minutes = hours * 60 + minutes
+		if total_minutes > 0:
+			add_screen_time(st.session_state.user, ed.isoformat(), total_minutes, utility)
+			st.success(f"Logged {hours}h {minutes}m for {utility} on {ed.isoformat()}")
+	
 	st.subheader("History")
 	sdf = get_screen_time(st.session_state.user)
 	if sdf.empty:
 		st.info("No screen time logged yet.")
 	else:
-		st.dataframe(sdf)
-
-	st.subheader("Daily totals (last 30)")
+		# Format display with hours and minutes
+		display_df = sdf.copy()
+		display_df['duration'] = display_df['minutes'].apply(lambda x: f"{x//60}h {x%60}m")
+		display_df['entry_date'] = pd.to_datetime(display_df['entry_date']).dt.strftime('%Y-%m-%d')
+		st.dataframe(display_df[['entry_date', 'utility', 'duration']], use_container_width=True)
+	
+	st.subheader("Daily Totals (Last 30 Days)")
 	if not sdf.empty:
-		sdf2 = sdf.groupby('entry_date').minutes.sum().reset_index()
-		st.bar_chart(sdf2.set_index('entry_date'))
+		sdf_daily = sdf.copy()
+		sdf_daily['entry_date'] = pd.to_datetime(sdf_daily['entry_date']).dt.date
+		daily_totals = sdf_daily.groupby('entry_date')['minutes'].sum().reset_index()
+		daily_totals = daily_totals.sort_values('entry_date', ascending=False).head(30)
+		daily_totals['hours'] = daily_totals['minutes'] // 60
+		daily_totals['mins'] = daily_totals['minutes'] % 60
+		daily_totals['duration'] = daily_totals.apply(lambda x: f"{int(x['hours'])}h {int(x['mins'])}m", axis=1)
+		daily_totals = daily_totals.sort_values('entry_date')
+		
+		st.bar_chart(daily_totals.set_index('entry_date')[['minutes']])
+	
+	st.subheader("Weekly Totals")
+	if not sdf.empty:
+		sdf_weekly = sdf.copy()
+		sdf_weekly['entry_date'] = pd.to_datetime(sdf_weekly['entry_date'])
+		sdf_weekly['week'] = sdf_weekly['entry_date'].dt.strftime('%Y-W%U')
+		weekly_totals = sdf_weekly.groupby('week')['minutes'].sum().reset_index()
+		weekly_totals['hours'] = weekly_totals['minutes'] // 60
+		weekly_totals['mins'] = weekly_totals['minutes'] % 60
+		weekly_totals['duration'] = weekly_totals.apply(lambda x: f"{int(x['hours'])}h {int(x['mins'])}m", axis=1)
+		
+		st.dataframe(weekly_totals[['week', 'duration']], use_container_width=True)
+		st.bar_chart(weekly_totals.set_index('week')[['minutes']])
 
