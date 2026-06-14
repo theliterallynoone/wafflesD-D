@@ -60,8 +60,8 @@ def init_db():
 	)
 	# insert two default users if not present (do not overwrite)
 	try:
-		cur.execute("INSERT OR IGNORE INTO users(username, password_hash) VALUES (?,?)", ("V", hash_pw("weball")))
-		cur.execute("INSERT OR IGNORE INTO users(username, password_hash) VALUES (?,?)", ("beastboy", hash_pw("changeme")))
+		cur.execute("INSERT OR IGNORE INTO users(username, password_hash) VALUES (?,?)", ("me", hash_pw("changeme")))
+		cur.execute("INSERT OR IGNORE INTO users(username, password_hash) VALUES (?,?)", ("partner", hash_pw("changeme")))
 	except Exception:
 		pass
 	conn.commit()
