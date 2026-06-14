@@ -306,15 +306,15 @@ THEMES = {
         "expander_text": "#f5f7ff",
     },
 
-    "Beige": {
-        "bg_color": "#FAF6F1",
-        "text_color": "#000000",      # black
-        "button_bg": "#E8DCC8",
-        "button_text": "#000000",
-        "input_bg": "#FFFAF5",
-        "input_text": "#000000",
-        "expander_bg": "#F0E8DC",
-        "expander_text": "#000000",
+	"Beige": {
+    	"bg_color": "#FAF6F1",
+    	"text_color": "#000000",
+    	"button_bg": "#E8DCC8",
+   		"button_text": "#000000",
+    	"input_bg": "#FFFAF5",
+    	"input_text": "#000000",
+    	"expander_bg": "#F0E8DC",
+    	"expander_text": "#000000",
     },
 
     "Light Mode": {
@@ -374,35 +374,72 @@ THEMES = {
 }
 
 def apply_theme(theme_name):
-	theme = THEMES.get(theme_name, THEMES["Dark Mode"])
-	st.markdown(
-		f"""
-		<style>
-			body, .main, .stApp {{
-				background-color: {theme['bg_color']};
-				color: {theme['text_color']};
-			}}
-			.stButton button {{
-				background-color: {theme['button_bg']};
-				color: {theme['button_text']};
-			}}
-			.stTextInput>div>div>input, .stNumberInput>div>div>input, .stDateInput>div>div>input, .stSelectbox>div>div>select {{
-				background-color: {theme['input_bg']};
-				color: {theme['input_text']};
-			}}
-			.stCheckbox>div {{
-				color: {theme['text_color']};
-			}}
-			.stExpanderHeader {{
-				background-color: {theme['expander_bg']};
-				color: {theme['expander_text']};
-			}}
-		</style>
-		""",
-		unsafe_allow_html=True,
-	)
+    theme = THEMES.get(theme_name, THEMES["Dark Mode"])
 
-st.set_page_config(page_title="D and D's Daily Tracker", page_icon=":guardsman:", layout="centered")
+    st.markdown(
+        f"""
+        <style>
+        /* Main app */
+        .stApp {{
+            background-color: {theme['bg_color']} !important;
+            color: {theme['text_color']} !important;
+        }}
+
+        /* Top header */
+        header[data-testid="stHeader"] {{
+            background-color: {theme['bg_color']} !important;
+        }}
+
+        /* Sidebar */
+        section[data-testid="stSidebar"] {{
+            background-color: {theme['bg_color']} !important;
+        }}
+
+        /* Sidebar navigation */
+        div[data-testid="stSidebarNav"] {{
+            background-color: {theme['bg_color']} !important;
+        }}
+
+        /* General text */
+        p, label, span, div, h1, h2, h3, h4, h5, h6 {{
+            color: {theme['text_color']} !important;
+        }}
+
+        /* Text boxes */
+        input, textarea {{
+            background-color: {theme['input_bg']} !important;
+            color: {theme['input_text']} !important;
+            -webkit-text-fill-color: {theme['input_text']} !important;
+        }}
+
+        /* Select boxes */
+        select {{
+            background-color: {theme['input_bg']} !important;
+            color: {theme['input_text']} !important;
+        }}
+
+        /* Buttons */
+        .stButton > button {{
+            background-color: {theme['button_bg']} !important;
+            color: {theme['button_text']} !important;
+            border: none !important;
+        }}
+
+        /* Expander */
+        .streamlit-expanderHeader {{
+            background-color: {theme['expander_bg']} !important;
+            color: {theme['expander_text']} !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+st.set_page_config(
+    page_title="D and D's Daily Tracker",
+    page_icon=":guardsman:",
+    layout="centered",
+    initial_sidebar_state="expanded",
+)
 
 
 if "user" not in st.session_state:
