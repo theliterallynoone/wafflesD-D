@@ -295,27 +295,16 @@ init_chapter_progress()
 
 # Theme definitions
 THEMES = {
-    "Dark Mode": {
-        "bg_color": "#0b111c",
-        "text_color": "#f5f7ff",      # light text
-        "button_bg": "#161b2b",
-        "button_text": "#f5f7ff",
-        "input_bg": "#09101f",
-        "input_text": "#f5f7ff",
-        "expander_bg": "#12182b",
-        "expander_text": "#f5f7ff",
-    },
-
 	"Beige": {
-    	"bg_color": "#FAF6F1",
-    	"text_color": "#000000",
-    	"button_bg": "#E8DCC8",
-   		"button_text": "#000000",
-    	"input_bg": "#FFFAF5",
-    	"input_text": "#000000",
-    	"expander_bg": "#F0E8DC",
-    	"expander_text": "#000000",
-    },
+		"bg_color": "#FAF6F1",
+		"text_color": "#000000",
+		"button_bg": "#E8DCC8",
+		"button_text": "#000000",
+		"input_bg": "#FFFAF5",
+		"input_text": "#000000",
+		"expander_bg": "#F0E8DC",
+		"expander_text": "#000000",
+	},
 
     "Light Mode": {
         "bg_color": "#FFFFFF",
@@ -374,7 +363,7 @@ THEMES = {
 }
 
 def apply_theme(theme_name):
-    theme = THEMES.get(theme_name, THEMES["Dark Mode"])
+    theme = THEMES.get(theme_name, THEMES["Beige"])
 
     st.markdown(
         f"""
@@ -509,6 +498,7 @@ if st.sidebar.button("Screen Time Tracker"):
 
 if st.session_state.page == "home":
 	st.markdown("## Welcome back")
+	st.markdown("[want a break? click this](https://respawn.streamlit.app/)")
 	
 elif st.session_state.page == "prep":
 	st.header("Preparation Tracker")
